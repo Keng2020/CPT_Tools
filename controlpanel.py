@@ -93,3 +93,36 @@ class ControlPanel(QWidget):
                 group_layout.addWidget(text_input)
         
         self.layout.addLayout(group_layout)
+
+    def addFlexibleRow(self, controls):
+        """
+        Adds a row with a flexible combination of controls to the control panel.
+
+        :param controls: A list of tuples, each specifying a control type ('button', 'combo', 'text')
+                        and its parameters. For a button, expect (type, text, action). For a combo box,
+                        expect (type, label, options) where options is a list of strings. For a text input,
+                        expect (type, placeholder, validator) where validator is optional.
+        """
+        row_layout = QHBoxLayout()
+        for control in controls:
+            control_type, *args = control
+            if control_type == 'button':
+                button = QPushButton(args[0], self)
+                button.clicked.connect(args[1])
+                row_layout.addWidget(button)
+            elif control_type == 'combo':
+                label, options = args
+                row_layout.addWidget(QLabel(label))
+                combo_box = QComboBox(self)
+                combo_box.addItems(options)
+                row_layout.addWidget(combo_box)
+            elif control_type == 'text':
+                placeholder = args[0]
+                validator = args[1] if len(args) > 1 else None
+                text_input = QLineEdit(self)
+                text_input.setPlaceholderText(placeholder)
+                if validator:
+                    text_input.setValidator(validator)
+                row_layout.addWidget(text_input)
+        self.layout.addLayout(row_layout)
+
