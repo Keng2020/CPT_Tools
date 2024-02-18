@@ -1,7 +1,9 @@
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.backend_bases import MouseEvent
+from scipy.spatial.distance import cdist
 import numpy as np
+import mplcursors
 
 class PlotCanvas(FigureCanvas):
     """
@@ -39,22 +41,18 @@ class PlotCanvas(FigureCanvas):
 
         self.plotted_data = [] 
 
-    
-    def set_zoom_action(self, event_type, action, sensitivity_x=None, sensitivity_y=None):
+        self.hover_enabled = False  # Initially, hover is not enabled
+        self.marker_data = []  # Initialize the marker_data attribute here
+
+
+    def set_zoom_action(self, event_type, action):
         """
         Set a custom zoom action based on the event type and action ('zoom in' or 'zoom out')
         Also dynamically connects the event handler for the specified event type.
         :param event_type: String representing the matplotlib event name.
         :param action: 'zoom_in' or 'zoom_out'
-        :param sensitivity_x: Sensitivity for horizontal zooming. Defaults to 'self.default_sensitivity' if None
-        :param sensitivity_y: Sensitivity for vertical zooming. Same default as 'sensitivity_x'
         """
-        if sensitivity_x is None:
-            sensitivity_x = self.default_zoom_sensitivity
-        if sensitivity_y is None:
-            sensitivity_y = self.default_zoom_sensitivity
-        
-        self.zoom_actions[event_type] = (action, sensitivity_x, sensitivity_y)
+        self.zoom_actions[event_type] = action
 
         # If the event is already connected, no need to reconenct it.
         if event_type in self.event_connections:
@@ -72,20 +70,16 @@ class PlotCanvas(FigureCanvas):
         if event.name not in self.zoom_actions:
             return
 
-        action, sensitivity_x, sensitivity_y = self.zoom_actions[event.name]
+        action = self.zoom_actions[event.name]
 
         zoom_in = action == 'zoom_in'
 
-        # Use event details to determine zoom direction and apply sensitivity
-        # Placeholder: Implement logic for zoom direction from event
-        scale_factor_x = sensitivity_x if zoom_in else 1 / sensitivity_x
-        scale_factor_y = sensitivity_y if zoom_in else 1 / sensitivity_y
-
-        self.zoom(event, scale_factor_x, scale_factor_y)
+        self.zoom(event)
 
     def initialize_zoom(self):
-        # Initialize scroll event for zoom
-        self.fig.canvas.mpl_connect('scroll_event', self.zoom)
+        # # Initialize scroll event for zoom
+        # self.fig.canvas.mpl_connect('scroll_event', self.zoom)
+        pass
         
 
     def initialize_hover(self):
@@ -98,11 +92,13 @@ class PlotCanvas(FigureCanvas):
                                         arrowprops=dict(arrowstyle="->"))
         self.annot.set_visible(False)
 
-        # Connect the hover event
-        self.fig.canvas.mpl_connect("motion_notify_event", self.hover)
 
-        # Ensure the canvas is ready and updated
-        self.draw()
+    def activate_hover(self):
+        # Activate hover by connecting the event
+        print("Activating hover...")
+        if not self.hover_enabled:
+            self.mpl_connect("motion_notify_event", self.hover)
+            self.hover_enabled = True
 
 
     def initialize_dragging(self):
@@ -116,17 +112,33 @@ class PlotCanvas(FigureCanvas):
         self.fig.canvas.mpl_connect('motion_notify_event', self.on_drag_move)
 
 
-    def plot(self, data_x, data_y, plot_type='line', **kwargs):
-        # Modify this method to track plotted data
-        if plot_type == 'line':
-            plot_ref = self.axes.plot(data_x, data_y, **kwargs)
-        elif plot_type == 'scatter':
-            # For scatter, store the collection returned by scatter() for hover detection
-            plot_ref = self.axes.scatter(data_x, data_y, **kwargs)
-        else:
-            raise ValueError(f"Unsupported plot type: {plot_type}")
-        
-        self.plotted_data.append((plot_type, plot_ref, (data_x, data_y)))
+    def plot(self, data_x, data_y, line_style='-', **kwargs):
+        """
+        Plots data on the canvas. Automatically detects if markers are present in the line style.
+        :param data_x: x data points
+        :param data_y: y data points
+        :param line_style: Style of the plot line, default is '-' (solid line). Can include marker styles.
+        :param kwargs: Additional keyword arguments for the plot function.
+        """
+        has_markers = any(marker in line_style for marker in ('o', '+', '*', '.', 'x', 's', 'd', ',', '^', '<', '>', 'p', 'h', 'H', '1', '2', '3', '4', '|', '_'))
+        if has_markers:
+            for x, y in zip(data_x, data_y):
+                self.marker_data.append((x, y))  # Assume simple case; extend as needed
+        plot_ref = self.axes.plot(data_x, data_y, line_style, **kwargs)
+        self.plotted_data.append({'data': (data_x, data_y), 'plot_ref': plot_ref, 'has_markers': has_markers})
+        self.draw()
+
+    def scatter(self, data_x, data_y, **kwargs):
+        """
+        Creates a scatter plot and stores its reference along with the data.
+        :param data_x: x data points.
+        :param data_y: y data points.
+        :param kwargs: Additional keyword arguments for the scatter function.
+        """
+        plot_ref = self.axes.scatter(data_x, data_y, **kwargs)
+        for x, y in zip(data_x, data_y):
+            self.marker_data.append((x, y))  # Assume simple case; extend as needed
+        self.plotted_data.append({'data': (data_x, data_y), 'plot_ref': plot_ref, 'has_markers': True})
         self.draw()
 
 
@@ -144,33 +156,6 @@ class PlotCanvas(FigureCanvas):
         self.initialize_dragging()
         # Clear any stored data references
         self.plotted_data = []
-
-
-    def update_plot(self, data_series, plot_styles=None):
-        """
-        Updates the plot with new data series.
-        
-        :param data_series: A list of tuples, each containing x and y data arrays.
-        :param plot_styles: A list of dictionaries, each containing style options for the corresponding data series.
-        """
-        self.clear_plot()
-        if plot_styles is None:
-            plot_styles = [{}] * len(data_series)  # Default empty style dicts if none provided
-        
-        for data, style in zip(data_series, plot_styles):
-            self.plot_data(data[0], data[1], **style)
-
-
-    def highlight_points(self, points, **kwargs):
-        """
-        Highlights specific points on the plot.
-        
-        :param points: A list of tuples, each containing the x and y coordinates of a point.
-        :param kwargs: style options for highlighting (color, marker, markersize, etc.)
-        """
-        for x, y in points:
-            self.axes.plot(x, y, **kwargs)
-        self.draw()
 
 
     def set_plot_attributes(self, title="", xlabel="", ylabel="", xticks=None, yticks=None, grid=True, **kwargs):
@@ -225,34 +210,181 @@ class PlotCanvas(FigureCanvas):
         self.annot.set_text(text)
         self.annot.get_bbox_patch().set_alpha(0.4)
 
+    # def calculate_dynamic_threshold(self, data_x, data_y):
+    #     # Ensure data_x and data_y are numpy arrays
+    #     data_x = np.array(data_x)
+    #     data_y = np.array(data_y)
 
+    #     # Stack data_x and data_y for distance calculation
+    #     points = np.vstack((data_x, data_y)).T
+
+    #     # Calculate pairwise distances, only keep non-zero distances (to exclude self-distance)
+    #     distances = cdist(points, points)
+    #     distances = distances[distances != 0]
+
+    #     # Calculate a suitable threshold based on the density or spread
+    #     # For example, use the 10th percentile of non-zero distances as the threshold
+    #     threshold = np.percentile(distances, 10) * 0.5  # Adjust multiplier as needed for sensitivity
+
+    #     return threshold
+    # def calculate_dynamic_threshold(self, data_x, data_y):
+    #     # Ensure data_x and data_y are numpy arrays
+    #     data_x = np.array(data_x)
+    #     data_y = np.array(data_y)
+
+    #     # Stack data_x and data_y for distance calculation
+    #     points = np.vstack((data_x, data_y)).T
+
+    #     # Calculate pairwise distances, only keep non-zero distances (to exclude self-distance)
+    #     distances = cdist(points, points)
+    #     distances = distances[np.triu_indices(distances.shape[0], k=1)]  # Exclude self-comparisons and duplicates
+
+    #     # Check if distances array is empty
+    #     if distances.size == 0:
+    #         # Return a default threshold or handle as needed
+    #         return 0.05  # Example default value, adjust based on your application's scale
+
+    #     # Calculate a suitable threshold based on the density or spread
+    #     threshold = np.percentile(distances, 10) * 0.5  # Adjust multiplier as needed for sensitivity
+
+    #     return threshold
+    def calculate_dynamic_threshold(self):
+        # If there are no points, return a default threshold
+        if not self.marker_data:
+            return 0.05  # Adjust this default value as needed
+        
+        # Get the current axes limits to understand the zoom level
+        x_lim = self.axes.get_xlim()
+        y_lim = self.axes.get_ylim()
+        axis_area = (x_lim[1] - x_lim[0]) * (y_lim[1] - y_lim[0])
+
+        # Calculate the area covered by each point, assuming uniform distribution
+        total_points = len(self.marker_data)
+        area_per_point = axis_area / total_points if total_points else axis_area
+
+        # Base threshold on the square root of the area per point, providing a measure of average distance between points
+        # Adjust the multiplier as needed to fine-tune sensitivity
+        base_threshold = np.sqrt(area_per_point) * 0.1
+
+        # Ensure the threshold is within reasonable bounds (min and max values)
+        min_threshold, max_threshold = 0.01, 0.1  # These bounds can be adjusted
+        threshold = np.clip(base_threshold, min_threshold, max_threshold)
+
+        return threshold
+
+
+    # def hover(self, event):
+    #     """
+    #     Handles mouse movement events to display annotations for points with markers.
+    #     :param event: MouseEvent instance.
+    #     """
+    #     vis = self.annot.get_visible()
+    #     if event.inaxes == self.axes:
+    #         found_point = False
+    #         for plot in self.plotted_data:
+    #             xdata, ydata = plot['data']
+    #             if plot['has_markers']:
+    #                 # Implement logic to detect proximity to points with markers
+    #                 # This is a simplified example. A more comprehensive approach might be needed.
+    #                 distances = np.sqrt((xdata - event.xdata)**2 + (ydata - event.ydata)**2)
+    #                 closest_index = np.argmin(distances)
+    #                 threshold = 0.05
+    #                 if distances[closest_index] < threshold:  # Define a suitable threshold
+    #                     self.update_annot(closest_index, xdata[closest_index], ydata[closest_index])
+    #                     found_point = True
+    #                     break
+    #         if found_point:
+    #             self.annot.set_visible(True)
+    #             self.fig.canvas.draw_idle()
+    #         else:
+    #             if vis:
+    #                 self.annot.set_visible(False)
+    #                 self.fig.canvas.draw_idle()
+    # def hover(self, event):
+    #     """
+    #     Handles mouse movement events to display annotations for points with markers.
+    #     :param event: MouseEvent instance.
+    #     """
+    #     vis = self.annot.get_visible()
+    #     if event.inaxes == self.axes:
+    #         found_point = False
+    #         for plot in self.plotted_data:
+    #             xdata, ydata = plot['data']
+    #             if plot['has_markers']:
+    #                 # Normalize distances if x,y values are large
+    #                 x_range = self.axes.get_xlim()[1] - self.axes.get_xlim()[0]
+    #                 y_range = self.axes.get_ylim()[1] - self.axes.get_ylim()[0]
+
+    #                 if len(xdata) == 1:  # If there's only one point
+    #                     distances = np.sqrt(((xdata - event.xdata) / x_range) ** 2 + ((ydata - event.ydata) / y_range) ** 2)
+    #                     closest_index = 0  # Only one point to check
+    #                 else:
+    #                     # Normalize distances
+    #                     normalized_xdata = (xdata - event.xdata) / x_range
+    #                     normalized_ydata = (ydata - event.ydata) / y_range
+    #                     distances = np.sqrt(normalized_xdata**2 + normalized_ydata**2)
+    #                     closest_index = np.argmin(distances)
+
+    #                 # Adjust the threshold based on the scale of the plot
+    #                 threshold = self.calculate_dynamic_threshold(xdata, ydata) / max(x_range, y_range)
+                    
+    #                 if distances[closest_index] < threshold:  # Check against adjusted threshold
+    #                     self.update_annot(closest_index, xdata[closest_index], ydata[closest_index])
+    #                     found_point = True
+    #                     break
+    #         if found_point:
+    #             self.annot.set_visible(True)
+    #             self.fig.canvas.draw_idle()
+    #         else:
+    #             if vis:
+    #                 self.annot.set_visible(False)
+    #                 self.fig.canvas.draw_idle()
+
+    # def hover(self, event):
+    #     if not self.hover_enabled:
+    #         return  # Do nothing if hover is not enabled
+    #     # Simplify hover logic by using self.marker_data
+    #     if event.inaxes == self.axes:
+    #         found_point = False
+    #         x_range = self.axes.get_xlim()[1] - self.axes.get_xlim()[0]
+    #         y_range = self.axes.get_ylim()[1] - self.axes.get_ylim()[0]
+
+    #         for x, y in self.marker_data:
+    #             distance = np.sqrt(((x - event.xdata) / x_range) ** 2 + ((y - event.ydata) / y_range) ** 2)
+    #             threshold = self.calculate_dynamic_threshold([x], [y]) / max(x_range, y_range)
+    #             if distance < threshold:
+    #                 self.update_annot(0, x, y)  # Index 0 used as a placeholder
+    #                 found_point = True
+    #                 break
+
+    #         if found_point:
+    #             self.annot.set_visible(True)
+    #             self.fig.canvas.draw_idle()
+    #         else:
+    #             self.annot.set_visible(False)
+    #             self.fig.canvas.draw_idle()
     def hover(self, event):
-        vis = self.annot.get_visible()
-        if event.inaxes == self.axes:
-            found_point = False
-            for plot_type, plot_ref, data in self.plotted_data:
-                xdata, ydata = data
-                if plot_type == 'scatter':
-                    # Use the correct scatter object reference for contains()
-                    # This ensures hover functionality works after clearing and re-plotting
-                    cont, ind = plot_ref.contains(event)
-                    if cont:
-                        self.update_annot(ind["ind"][0], xdata[ind["ind"][0]], ydata[ind["ind"][0]])
-                        found_point = True
-                        break
-                else:  
-                    # Placeholder for future implementation for other plot types
-                    pass
+        if not self.hover_enabled or event.inaxes != self.axes:
+            return
 
-            if found_point:
-                self.annot.set_visible(True)
-                self.fig.canvas.draw_idle()
-            else:
-                if vis:
-                    self.annot.set_visible(False)
-                    self.fig.canvas.draw_idle()
+        found_point = False
+        for x, y in self.marker_data:
+            distance = np.sqrt((x - event.xdata) ** 2 + (y - event.ydata) ** 2)
+            threshold = 0.05  # Static threshold for testing
+            if distance < threshold:
+                self.update_annot(0, x, y)  # Using 0 as a placeholder
+                found_point = True
+                break
 
-    def zoom(self, event, scale_factor_x, scale_factor_y):
+        if found_point:
+            self.annot.set_visible(True)
+            self.fig.canvas.draw_idle()
+        else:
+            self.annot.set_visible(False)
+            self.fig.canvas.draw_idle()
+
+
+    def zoom(self, event):
         """
         Zoom in or out of the plot using separate scale factors for x and y directions.
 
