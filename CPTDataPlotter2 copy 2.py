@@ -22,6 +22,7 @@ from plotcanvas import PlotCanvas
 from controlpanel import ControlPanel
 from spatial_analysis_utils import *
 
+
 class CPTDataPlotter(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -100,6 +101,20 @@ class CPTDataPlotter(QMainWindow):
         ('button', 'Select region to clear data', lambda: self.enable_rectangle_selector('clear')),
         ('button', 'Select region to recover data', lambda: self.enable_rectangle_selector('recover'))
         ])
+        self.depth_widgets = self.left_control_panel.addFlexibleRow([
+            ('text', 'Start Depth', None),
+            ('text', 'End Depth', None),
+            ('button', 'Submit', self.on_submit_depth),
+            ('button', 'Clear', self.on_delete_file)
+        ])
+        self.dot_widgets = self.left_control_panel.addFlexibleRow([
+            ('dot', 'keep_file', True),  # Example usage
+        ])
+        self.left_control_panel.addFlexibleRow([
+            ('button', 'Export to .mat file', self.exportToMATLAB)
+        ])
+
+        self.keep_file_dot = self.dot_widgets.get('dot_keep_file')
         
         self.lock_lim_button = widgets_temp.get('button_Lock/Unlock xy lim')
         self.left_control_panel.setup_color_toggle_button(
@@ -171,7 +186,8 @@ class CPTDataPlotter(QMainWindow):
             # Recover data by copying from the original dataset
             self.integrated_data_plot.loc[within_region, self.file_name_list[self.current_plot_index]] = \
                 self.integrated_data_ori.loc[within_region, self.file_name_list[self.current_plot_index]]
-
+        self.current_xlim = self.main_plot_canvas.axes.get_xlim()
+        self.current_ylim = self.main_plot_canvas.axes.get_ylim()
         # Redraw the plot to reflect the changes
         self.show_main_plot(self.current_plot_index)
 
@@ -391,18 +407,24 @@ class CPTDataPlotter(QMainWindow):
             self.main_plot_canvas.axes.invert_yaxis()  # Ensure y-axis is inverted for depth plots
             self.main_plot_canvas.draw()  # Redraw the canvas with all changes
 
+            lightbulb_status = self.keep_file_boolean_df.get(file)
+            self.keep_file_dot.updateIndicator(lightbulb_status)
+
     
     def show_export_plot(self):
         self.export_plot_canvas.clear_plot()
         for col in self.integrated_data_ori.columns[1:]:
             self.export_plot_canvas.plot(self.integrated_data_ori[col], self.integrated_data_ori['Depth (m)'], line_style='-', **{'markersize':1.5, 'color':'lightgray'})
+        self.export_plot_canvas.axes.set_xlim([0, self.max_qt])
+        self.export_plot_canvas.axes.set_ylim([0, self.max_depth])
         self.export_plot_canvas.axes.invert_yaxis()
         self.export_plot_canvas.draw()
         self.export_plot_canvas.axes.set_xlabel('qt (MPa)')
         self.export_plot_canvas.axes.set_ylabel('Depth (m)')
         for file, should_plot in self.keep_file_boolean_df.items():
             if should_plot:
-                self.export_plot_canvas.plot(self.integrated_data_ori[col], self.integrated_data_ori['Depth (m)'], line_style='-', **{'markersize':1.5, 'color':self.file_colors[file]})
+                self.export_plot_canvas.plot(self.integrated_data_export[file], self.integrated_data_ori['Depth (m)'], line_style='-', **{'markersize':1.5, 'color':self.file_colors[file]})
+
 
     def on_zoom_sensitivity_x_changed(self, value):
         value = value / self.scale_factor
@@ -416,20 +438,80 @@ class CPTDataPlotter(QMainWindow):
         self.main_plot_canvas.set_zoom_sensitivity_y(value)
     
     def exportToMATLAB(self):
-        pass
-    
+        directory = os.path.join(self.project_path, self.cluster_name)
+        # Convert DataFrames to dictionaries with 2D array for each column
+        def df_to_dict(df):
+            return {col: df[col].values[:, None] for col in df.columns}
+        # For the 1D DataFrame, convert both index and values
+        def series_to_dict(series):
+            return {
+                'values': series.values[:, None],
+                'index': np.array(series.index, dtype=object)[:, None]
+            }
+        # Convert nztm_data_dict to MATLAB format
+        file_ids = []
+        nztmX_values = []
+        nztmY_values = []
+
+        for file_id, coords in self.nztm_data_dict.items():
+            file_ids.append(file_id)
+            nztmX_values.append(coords['nztmX'])
+            nztmY_values.append(coords['nztmY'])
+
+        # Add nztm_data to the mat_data dictionary
+        # mat_data['nztm_data'] = {
+        #     'file_id': np.array(file_ids, dtype=object),
+        #     'nztmX': np.array(nztmX_values),
+        #     'nztmY': np.array(nztmY_values)
+        # }
+        try:
+            mat_data = {
+                'integrated_data_ori': df_to_dict(self.integrated_data_ori),
+                'integrated_data_plot': df_to_dict(self.integrated_data_plot),
+                'integrated_data_export': df_to_dict(self.integrated_data_export),
+                'keep_data_boolean_df': df_to_dict(self.keep_data_boolean_df),
+                # Handle 1D DataFrame (boolean) by converting to 2D numpy array
+                'keep_file_boolean_df': series_to_dict(self.keep_file_boolean_df),
+                # # Convert lists to numpy arrays
+                # 'X': np.array(self.nztmX_list),
+                # 'Y': np.array(self.nztmY_list),
+                'nztm_data': {
+                        'file_id': np.array(file_ids, dtype=object),
+                        'nztmX': np.array(nztmX_values),
+                        'nztmY': np.array(nztmY_values)
+                    },
+                'fileNameList': np.array(self.file_name_list, dtype=object)  # dtype=object for string array
+            }
+            print(file_ids, type(file_ids))
+            print(nztmX_values, type(nztmX_values))
+            print(nztmY_values, type(nztmY_values))
+            # print(self.nztm_data)
+            # print(self.keep_file_boolean_df)
+            # Save as .mat file
+            filepath = os.path.join(directory, 'clean_data_from_python.mat')
+            savemat(filepath, mat_data)
+            # Save the object instance
+            object_filepath = os.path.join(directory, 'object_instance.pkl')
+            # with open(object_filepath, 'wb') as object_file:
+            #     pickle.dump(self, object_file)
+            # Pop-up message upon successful export
+            QMessageBox.information(self, "Export Complete", "Data successfully exported to MATLAB .mat file.")
+        except Exception as e:
+            # Pop-up message in case of an error
+            QMessageBox.critical(self, "Export Failed", f"An error occurred during export: {e}")
+
     def show_previous_plot(self):
         self.current_xlim = self.main_plot_canvas.axes.get_xlim()
         self.current_ylim = self.main_plot_canvas.axes.get_ylim()
         if self.current_plot_index > 0:
-            self.show_main_plot(self.current_plot_index - 1, keep_limits=self.limits_locked)
+            self.show_main_plot(self.current_plot_index - 1)
             self.show_locations_plot(self.current_plot_index_loc - 1)
 
     def show_next_plot(self):
         self.current_xlim = self.main_plot_canvas.axes.get_xlim()
         self.current_ylim = self.main_plot_canvas.axes.get_ylim()
         if self.current_plot_index < len(self.data_ori) - 1:
-            self.show_main_plot(self.current_plot_index + 1, keep_limits=self.limits_locked)
+            self.show_main_plot(self.current_plot_index + 1)
             self.show_locations_plot(self.current_plot_index_loc + 1)
 
 
@@ -462,10 +544,25 @@ class CPTDataPlotter(QMainWindow):
             # Adjust color for locked state if desired
 
     def on_submit_depth(self):
-        pass
+        # Implement the logic to handle the depth input submission
+        file = self.file_name_list[self.current_plot_index]
+        start_depth = float(self.depth_widgets['text_Start Depth'].text())
+        end_depth = float(self.depth_widgets['text_End Depth'].text())
+        self.keep_file_boolean_df[file] = True
+        # Create a boolean mask for the specified depth range
+        within_region = (self.integrated_data_ori['Depth (m)'] >= start_depth) & (self.integrated_data_ori['Depth (m)'] <= end_depth)
+        # Set values to NaN outside the specified depth range
+        self.integrated_data_export[file] = np.where(within_region, self.integrated_data_plot[file], np.nan)
+        self.show_export_plot()
+        lightbulb_status = self.keep_file_boolean_df.get(file)
+        self.keep_file_dot.updateIndicator(lightbulb_status)
 
     def on_delete_file(self):
-        pass
+        file = self.file_name_list[self.current_plot_index]
+        self.keep_file_boolean_df[file] = False
+        self.show_export_plot()
+        lightbulb_status = self.keep_file_boolean_df.get(file)
+        self.keep_file_dot.updateIndicator(lightbulb_status)
 
     def interpolate_data(self, data, depth_array):
         interpolated_qt = np.interp(depth_array, data['Depth (m)'], data['qt (MPa)'], left=np.nan, right=np.nan)
