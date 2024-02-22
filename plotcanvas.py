@@ -44,6 +44,17 @@ class PlotCanvas(FigureCanvas):
         self.hover_enabled = False  # Initially, hover is not enabled
         self.marker_data = []  # Initialize the marker_data attribute here
 
+        self.enable_interactions = True  # Add this line to initialize interaction control
+
+    def toggle_interactions(self, enable=None):
+        """
+        Enables or disables plot interactions (zooming and dragging).
+        If enable is None, toggles the current state.
+        """
+        if enable is None:
+            self.enable_interactions = not self.enable_interactions
+        else:
+            self.enable_interactions = enable
 
     def set_zoom_action(self, event_type, action):
         """
@@ -95,7 +106,7 @@ class PlotCanvas(FigureCanvas):
 
     def activate_hover(self):
         # Activate hover by connecting the event
-        print("Activating hover...")
+        # print("Activating hover...")
         if not self.hover_enabled:
             self.mpl_connect("motion_notify_event", self.hover)
             self.hover_enabled = True
@@ -273,96 +284,6 @@ class PlotCanvas(FigureCanvas):
         return threshold
 
 
-    # def hover(self, event):
-    #     """
-    #     Handles mouse movement events to display annotations for points with markers.
-    #     :param event: MouseEvent instance.
-    #     """
-    #     vis = self.annot.get_visible()
-    #     if event.inaxes == self.axes:
-    #         found_point = False
-    #         for plot in self.plotted_data:
-    #             xdata, ydata = plot['data']
-    #             if plot['has_markers']:
-    #                 # Implement logic to detect proximity to points with markers
-    #                 # This is a simplified example. A more comprehensive approach might be needed.
-    #                 distances = np.sqrt((xdata - event.xdata)**2 + (ydata - event.ydata)**2)
-    #                 closest_index = np.argmin(distances)
-    #                 threshold = 0.05
-    #                 if distances[closest_index] < threshold:  # Define a suitable threshold
-    #                     self.update_annot(closest_index, xdata[closest_index], ydata[closest_index])
-    #                     found_point = True
-    #                     break
-    #         if found_point:
-    #             self.annot.set_visible(True)
-    #             self.fig.canvas.draw_idle()
-    #         else:
-    #             if vis:
-    #                 self.annot.set_visible(False)
-    #                 self.fig.canvas.draw_idle()
-    # def hover(self, event):
-    #     """
-    #     Handles mouse movement events to display annotations for points with markers.
-    #     :param event: MouseEvent instance.
-    #     """
-    #     vis = self.annot.get_visible()
-    #     if event.inaxes == self.axes:
-    #         found_point = False
-    #         for plot in self.plotted_data:
-    #             xdata, ydata = plot['data']
-    #             if plot['has_markers']:
-    #                 # Normalize distances if x,y values are large
-    #                 x_range = self.axes.get_xlim()[1] - self.axes.get_xlim()[0]
-    #                 y_range = self.axes.get_ylim()[1] - self.axes.get_ylim()[0]
-
-    #                 if len(xdata) == 1:  # If there's only one point
-    #                     distances = np.sqrt(((xdata - event.xdata) / x_range) ** 2 + ((ydata - event.ydata) / y_range) ** 2)
-    #                     closest_index = 0  # Only one point to check
-    #                 else:
-    #                     # Normalize distances
-    #                     normalized_xdata = (xdata - event.xdata) / x_range
-    #                     normalized_ydata = (ydata - event.ydata) / y_range
-    #                     distances = np.sqrt(normalized_xdata**2 + normalized_ydata**2)
-    #                     closest_index = np.argmin(distances)
-
-    #                 # Adjust the threshold based on the scale of the plot
-    #                 threshold = self.calculate_dynamic_threshold(xdata, ydata) / max(x_range, y_range)
-                    
-    #                 if distances[closest_index] < threshold:  # Check against adjusted threshold
-    #                     self.update_annot(closest_index, xdata[closest_index], ydata[closest_index])
-    #                     found_point = True
-    #                     break
-    #         if found_point:
-    #             self.annot.set_visible(True)
-    #             self.fig.canvas.draw_idle()
-    #         else:
-    #             if vis:
-    #                 self.annot.set_visible(False)
-    #                 self.fig.canvas.draw_idle()
-
-    # def hover(self, event):
-    #     if not self.hover_enabled:
-    #         return  # Do nothing if hover is not enabled
-    #     # Simplify hover logic by using self.marker_data
-    #     if event.inaxes == self.axes:
-    #         found_point = False
-    #         x_range = self.axes.get_xlim()[1] - self.axes.get_xlim()[0]
-    #         y_range = self.axes.get_ylim()[1] - self.axes.get_ylim()[0]
-
-    #         for x, y in self.marker_data:
-    #             distance = np.sqrt(((x - event.xdata) / x_range) ** 2 + ((y - event.ydata) / y_range) ** 2)
-    #             threshold = self.calculate_dynamic_threshold([x], [y]) / max(x_range, y_range)
-    #             if distance < threshold:
-    #                 self.update_annot(0, x, y)  # Index 0 used as a placeholder
-    #                 found_point = True
-    #                 break
-
-    #         if found_point:
-    #             self.annot.set_visible(True)
-    #             self.fig.canvas.draw_idle()
-    #         else:
-    #             self.annot.set_visible(False)
-    #             self.fig.canvas.draw_idle()
     def hover(self, event):
         if not self.hover_enabled or event.inaxes != self.axes:
             return
@@ -392,6 +313,9 @@ class PlotCanvas(FigureCanvas):
         :param scale_factor_x: Scale factor for horizontal zooming.
         :param scale_factor_y: Scale factor for vertical zooming.
         """
+        if not self.enable_interactions or not event.inaxes:
+            return
+
         if not event.inaxes:
             return
 
@@ -433,7 +357,7 @@ class PlotCanvas(FigureCanvas):
         """
         Handles the beginning of a drag operation.
         """
-        if event.button == 1:  # Left mouse button
+        if event.button == 3:  # Right mouse button
             self.moving = True
             self.move_start_pos = (event.xdata, event.ydata)
 
@@ -441,13 +365,16 @@ class PlotCanvas(FigureCanvas):
         """
         Handles the end of a drag operation.
         """
-        self.moving = False
-        self.move_start_pos = None
+        if event.button == 3:  # Right mouse button
+            self.moving = False
+            self.move_start_pos = None
 
     def on_drag_move(self, event):
         """
         Handles the movement of the mouse during a drag operation.
         """
+        if not self.enable_interactions or not self.moving:
+            return
         if self.moving and self.move_start_pos is not None and event.xdata is not None and event.ydata is not None:
             dx = event.xdata - self.move_start_pos[0]
             dy = event.ydata - self.move_start_pos[1]
