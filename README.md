@@ -1,36 +1,37 @@
 # CPT Data Editor
 
-CPT Data Editor is a comprehensive application designed for geotechnical engineers and researchers to visualize, analyze, and edit Cone Penetration Test (CPT) data. Built with PyQt5 and integrating powerful data processing libraries like Pandas and NumPy, this tool provides a user-friendly interface for managing CPT data, including viewing plots, editing data ranges, and exporting modified datasets for further analysis.
+The CPT Data Editor is a sophisticated application tailored for geotechnical engineers and researchers, designed to visualize, analyze, and edit Cone Penetration Test (CPT) data. Leveraging the capabilities of PyQt5 and integrating powerful data processing libraries such as Pandas and NumPy, it offers an intuitive interface for comprehensive CPT data management. This includes functionalities for interactive data plotting, precise data editing, and the exportation of modified datasets for advanced analyses.
 
 ## Features
 
-- **Data Visualization**: Easily visualize CPT data in interactive plots. Compare multiple datasets simultaneously for in-depth analysis.
-- **Data Editing**: Select specific data regions for detailed editing. Clear or recover data points to refine your analysis.
-- **Export Capabilities**: Export your edited datasets to MATLAB format for further analysis or integration with other tools.
-- **Interactive Selection**: Use rectangle selectors to interactively choose data points on plots for editing.
-- **Cluster Management**: Organize your CPT data into clusters and select clusters for detailed examination.
-- **Customizable Plots**: Adjust plot settings and export visualization as needed.
+- **Data Visualization**: Seamlessly visualize CPT data through interactive plots. Facilitates comparison of multiple datasets for thorough analysis.
+- **Data Editing**: Precisely select and edit specific data regions. Features include clearing or recovering data points to refine your dataset.
+- **Export Capabilities**: Enables the export of edited datasets in MATLAB format, allowing for further analysis or use with other analytical tools.
+- **Interactive Selection**: Utilize rectangle selectors for interactive data point selection on plots, enhancing user control over data editing.
+- **Cluster Management**: Efficiently organize your CPT data into clusters for easier analysis and selection.
+- **Customizable Plots**: Offers extensive plot customization options, including adjustment of plot settings and visualization exports.
 
 ## Installation
 
-The CPT Data Editor is distributed as an executable file (.exe), simplifying the installation process. There's no need to install Python or any dependencies manually.
+CPT Data Editor is conveniently distributed as an executable file (.exe), streamlining the installation process without the need for manual installation of Python or dependencies.
 
-### Steps to install:
+### Installation Steps:
 
-1. Download the `CPTDataEditor.exe` file from the latest release.
-2. Place the `.exe` file in a desired directory.
-3. Double-click the `.exe` file to launch the CPT Data Editor.
+1. Download `CPTDataEditor.exe` from the latest release.
+2. Place the executable file in your preferred directory.
+3. Double-click on `CPTDataEditor.exe` to initiate the application.
 
-Note: Depending on your Windows security settings, you may need to allow permissions or create an exception in your firewall to run the application for the first time.
+*Note*: Your Windows security settings may prompt you to allow permissions or create a firewall exception to run the application for the first time.
 
 ## Usage
 
-Upon launching the CPT Data Editor, you will be greeted with a user-friendly interface divided into several panels for data management and visualization.
+Launching the CPT Data Editor presents a user-friendly interface, segmented into multiple panels for efficient data management and visualization.
 
-## Choosing the Project Folder
+### Organizing the Project Folder
 
-The CPT Data Editor organizes CPT data into clusters within the project folder. Each cluster contains individual CPT data files and an `Extracted` subfolder for processed data. To efficiently use the application, your project folder should follow this structure:
+The CPT Data Editor structures CPT data into clusters within the project folder. Each cluster comprises individual CPT data files and an `Extracted` subfolder for processed data. For optimal use, structure your project folder as follows:
 
+```
 project_folder/
 └── Cluster 1/
     ├── CPT xxx.xlsx
@@ -38,19 +39,20 @@ project_folder/
     └── Extracted/
         ├── CPT xxx.csv
         └── CPT yyy.csv
+```
 
-### Key Features:
+### Key Functionalities:
 
-- **Choose Project Path**: Select the directory containing your CPT data.
-- **Select Cluster**: Choose a specific cluster of data to analyze.
-- **Visualization Panels**: View location, main data, and export data plots. Navigate through data points using the provided controls.
-- **Edit Data**: Use the rectangle selector tools to clear or recover data points. Submit depth ranges for precise editing.
-- **Export Data**: Export edited data to a MATLAB-compatible `.mat` file for further analysis.
+- **Choose Project Path**: Navigate and select the directory containing your CPT data.
+- **Select Cluster**: Identify and select a specific cluster of data for detailed analysis.
+- **Visualization Panels**: Access location, main data, and export data plots. Utilize navigation controls to sift through data points efficiently.
+- **Edit Data**: Engage rectangle selector tools for data clearing or recovery. Input depth ranges for targeted editing.
+- **Export Data**: Facilitate the exportation of data in a MATLAB-compatible `.mat` file format for extended analysis.
 
 ## Contributing
 
-Contributions to the CPT Data Editor are welcome. Please refer to the contributing guidelines for more information on how to contribute to the development.
+Your contributions to the CPT Data Editor are highly valued. For guidelines on contributing, please consult the project's contributing documentation.
 
 ## License
 
-Specify the license under which your tool is released, and include a `LICENSE` file in your repository.
+This tool is released under [SPECIFY LICENSE], with the full text available in the `LICENSE` file located in the repository.
