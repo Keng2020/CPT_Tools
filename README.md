@@ -27,6 +27,18 @@ Note: Depending on your Windows security settings, you may need to allow permiss
 
 Upon launching the CPT Data Editor, you will be greeted with a user-friendly interface divided into several panels for data management and visualization.
 
+## Choosing the Project Folder
+
+The CPT Data Editor organizes CPT data into clusters within the project folder. Each cluster contains individual CPT data files and an `Extracted` subfolder for processed data. To efficiently use the application, your project folder should follow this structure:
+
+project_folder/
+└── Cluster 1/
+    ├── CPT xxx.xlsx
+    ├── CPT yyy.xlsx
+    └── Extracted/
+        ├── CPT xxx.csv
+        └── CPT yyy.csv
+
 ### Key Features:
 
 - **Choose Project Path**: Select the directory containing your CPT data.
