@@ -56,3 +56,23 @@ Your contributions to the CPT Data Editor are highly valued. For guidelines on c
 ## License
 
 This tool is released under [SPECIFY LICENSE], with the full text available in the `LICENSE` file located in the repository.
+
+project_folder/
+└── Cluster 1/
+    ├── CPT xxx.xlsx
+    ├── CPT yyy.xlsx
+    └── Extracted/
+        ├── CPT xxx.csv
+        └── CPT yyy.csv
+    └── results TMCMC/
+        ├── xxx.mat
+        └── xxx.mat
+└── Cluster 2/
+    ├── CPT xxx.xlsx
+    ├── CPT yyy.xlsx
+    └── Extracted/
+        ├── CPT xxx.csv
+        └── CPT yyy.csv
+    └── results TMCMC/
+        ├── xxx.mat
+        └── xxx.mat
