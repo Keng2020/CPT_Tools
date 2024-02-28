@@ -1,11 +1,14 @@
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QGridLayout,
-                             QVBoxLayout, QFileDialog, QShortcut, QProgressBar)
+                             QVBoxLayout, QFileDialog, QShortcut, QProgressBar,
+                             QHBoxLayout, QLineEdit, QPushButton)
 from PyQt5.QtCore import Qt
 from plotcanvas import PlotCanvas
 from controlpanel import ControlPanel
 from scipy.io import loadmat
 import numpy as np
+import pandas as pd
 import sys, os
+import math
 
 class CPTResultInspector(QMainWindow):
     def __init__(self):
@@ -24,7 +27,9 @@ class CPTResultInspector(QMainWindow):
         self.data_cache = {}  # Initialize the cache
         self.mat_files = []  # To store paths of .mat files
         self.current_file_index = 0  # To keep track of the current .mat file being plotted
-        self.checkbox_states = {}  # Example: { 'mat_file_path': {'Checkbox 1': True, 'Checkbox 2': False} }
+        self.checkbox_states = {}  # To store checkbox states
+        self.folder_path = ""  # Directory of .mat files
+    
         
     def setup_layout(self):
         main_grid_layout = QGridLayout(self.main_widget)
@@ -51,34 +56,75 @@ class CPTResultInspector(QMainWindow):
 
     def setup_shortcuts(self):
         # Connect key press events to methods
-        self.shortcut_previous = QShortcut(Qt.Key_Left, self)
+        self.shortcut_previous = QShortcut(Qt.Key_Minus, self)
         self.shortcut_previous.activated.connect(self.prev_mat_file)
 
-        self.shortcut_next = QShortcut(Qt.Key_Right, self)
+        self.shortcut_next = QShortcut(Qt.Key_Equal, self)
         self.shortcut_next.activated.connect(self.next_mat_file)
 
     
     def populate_result_window(self):
-        self.plot_canvas_result = PlotCanvas(parent=self, use_subplots=True, nrows=2, ncols=2)
-        self.result_window = QMainWindow()  # Using QMainWindow here
+        self.result_window = QMainWindow()  
         self.result_window.setWindowTitle("Plot Canvas Result")
         self.result_window.setWindowFlags(self.result_window.windowFlags() | Qt.WindowStaysOnTopHint)
+
         result_widget = QWidget()
         self.result_window.setCentralWidget(result_widget)
-        result_layout = QVBoxLayout(result_widget)
-        self.control_panel = ControlPanel()
+
+        result_layout = QHBoxLayout(result_widget)
+        self.control_panel_1 = ControlPanel()
         # result_layout.addLayout(self.plot_canvas_result.get_layout())
-        self.control_panel.addFlexibleRow([
+        self.control_panel_1.addFlexibleRow([
             ('button', 'Previous', self.prev_mat_file),
             ('button', 'Next', self.next_mat_file),
+        ])
+
+        self.plot_canvas_result = PlotCanvas(parent=self, use_subplots=True, nrows=2, ncols=2)
+        self.control_panel_1.addPlotCanvas(self.plot_canvas_result.get_layout())
+        
+        self.control_panel_2 = ControlPanel()
+        self.ticklist_widgets = self.control_panel_2.addFlexibleRow([
             ('ticklist', [
-                ('Checkbox 1', True, 'Identifiable', 'Unidentifiable'), 
-                ('Checkbox 2', False, 'Identifiable', 'Unidentifiable')
+                ('sofv',  False, 'Identifiable', 'Unidentifiable'), 
+                ('nuv',   False, 'Identifiable', 'Unidentifiable'),
+                ('sofh',  False, 'Identifiable', 'Unidentifiable'), 
+                ('nuh',   False, 'Identifiable', 'Unidentifiable'),
+                ('sig',   False, 'Identifiable', 'Unidentifiable'), 
+                ('sigt',  False, 'Identifiable', 'Unidentifiable'),
+                ('sofvt', False, 'Identifiable', 'Unidentifiable'), 
+                ('sofht', False, 'Identifiable', 'Unidentifiable'),
             ], 'vertical'),
         ])
-        self.control_panel.addPlotCanvas(self.plot_canvas_result.get_layout())
-        result_layout.addWidget(self.control_panel)
-        self.result_window.resize(540, 540)
+        # self.checkboxList = [self.ticklist_widgets.get(f"ticklist_{item_text}") for item_text in ['sofv', 'nuv', 'sofh', 'nuh', 'sig', 'sigt', 'sofvt', 'sofht']]
+            # Assuming checkboxes are stored in a list or dict for easy access
+        self.checkbox_params = ['δv', 'νv', 'δh', 'νh', 'σ', 'σt', 'δvt', 'δht']
+        self.checkbox_widgets = {
+            'δv': self.ticklist_widgets.get("ticklist_sofv"),
+            'νv': self.ticklist_widgets.get("ticklist_nuv"),
+            'δh': self.ticklist_widgets.get("ticklist_sofh"),
+            'νh': self.ticklist_widgets.get("ticklist_nuh"),
+            'σ': self.ticklist_widgets.get("ticklist_sig"),
+            'σt': self.ticklist_widgets.get("ticklist_sigt"),
+            'δvt': self.ticklist_widgets.get("ticklist_sofvt"),
+            'δht': self.ticklist_widgets.get("ticklist_sofht"),
+        }
+
+        for param in self.checkbox_params:
+            checkbox = self.checkbox_widgets[param]
+            checkbox.stateChanged.connect(
+                lambda state, param=param: self.update_df_value(param, state)
+            )
+
+        # Add a submit button to handle updates
+        self.submit_button = QPushButton("Submit")
+        self.submit_button.clicked.connect(self.submit_changes)
+
+
+        self.control_panel_2.addWidget(self.submit_button)
+
+        result_layout.addWidget(self.control_panel_1)
+        result_layout.addWidget(self.control_panel_2)
+        self.result_window.resize(600, 400)
         self.result_window.show()
 
 
@@ -89,13 +135,12 @@ class CPTResultInspector(QMainWindow):
         temp = self.left_control_panel.addFlexibleRow([
             ('combo', 'Select File', ["Please Choose Project Path first"])
         ])
+        self.left_control_panel.addFlexibleRow([
+            ('button', 'Export to csv', self.export_to_csv)
+        ])
         self.mat_file_dropdown = temp.get('combo_Select File')
         self.mat_file_dropdown.setGeometry(50, 50, 400, 30)  # Set position and size
         self.mat_file_dropdown.currentIndexChanged.connect(self.on_mat_file_selected)  # Connect to the handler
-        # self.left_control_panel.addFlexibleRow([
-        #     ('button', 'Previous', self.prev_mat_file),
-        #     ('button', 'Next', self.next_mat_file)
-        # ])
 
         self.plot_canvas_loc = PlotCanvas(parent=self)
         self.left_control_panel.addPlotCanvas(self.plot_canvas_loc.get_layout())
@@ -111,12 +156,21 @@ class CPTResultInspector(QMainWindow):
 
     def choose_project_path(self):
         # folder_path = QFileDialog.getExistingDirectory(self, "Select Project Folder")
-        folder_path = r"D:\MATLAB_DRIVE\MATLAB_PROJ\Xu\CPT数据库 (1)"
-        if folder_path:
-            self.load_mat_files(folder_path)
+        self.folder_path = r"D:\MATLAB_DRIVE\MATLAB_PROJ\Xu\CPT数据库 (1)"
+        if self.folder_path:
+            self.initPD()
+            self.load_mat_files(self.folder_path)
             self.update_mat_file_dropdown()  # Update the dropdown list
             self.plot_current_mat_file(initial=True)
 
+
+    def initPD(self):
+        input_csv_file_path = os.path.join(self.folder_path, 'results_summary.csv')
+        if os.path.exists(input_csv_file_path):
+            self.df = pd.read_csv(input_csv_file_path)
+        else:
+            self.df = pd.DataFrame(columns=["Site Name", "Cluster", "File Name", "δv", "νv", "δh", "νh", "σ", "σt", "δvt", "δht"])
+    
     
     def update_mat_file_dropdown(self):
         # Clear existing items
@@ -132,9 +186,37 @@ class CPTResultInspector(QMainWindow):
             self.mat_file_dropdown.addItem(f"{folder_name}-{os.path.basename(mat_path)}", mat_path)
 
 
+    # def update_checkbox_state(self, checkbox_name, state):
+    #     mat_path = self.mat_files[self.current_file_index]
+    #     if mat_path not in self.checkbox_states:
+    #         self.checkbox_states[mat_path] = {}
+    #     self.checkbox_states[mat_path][checkbox_name] = state
+
+
+    #     # Example method to connect to checkbox stateChanged signal
+    # def checkbox_state_changed(self, state, checkbox_name):
+    #     # Convert state to boolean
+    #     is_checked = state == Qt.Checked
+    #     # Update the state in the dictionary
+    #     self.update_checkbox_state(checkbox_name, is_checked)
+
+
     def on_mat_file_selected(self, index):
         if index >= 0 and index < len(self.mat_files):
             self.current_file_index = index
+            mat_path = self.mat_files[self.current_file_index]
+            
+            # Check if the .mat file has been visited before
+            if mat_path not in self.checkbox_states:
+                # Initialize the state to "Unidentifiable" for each checkbox
+                self.checkbox_states[mat_path] = {'Checkbox 1': False, 'Checkbox 2': False}
+            
+            # Apply the stored or default states
+            states = self.checkbox_states[mat_path]
+            # for checkbox_name, checkbox_widget in self.control_panel.created_widgets.items():
+            #     if checkbox_name in states:
+            #         checkbox_widget.setChecked(states[checkbox_name])
+                
             self.plot_current_mat_file()
 
 
@@ -165,7 +247,29 @@ class CPTResultInspector(QMainWindow):
                         self.mat_files.append(mat_path)
                         self.cache_mat_file(mat_path)
                         print(f'Caching {mat_path} ...')
+                        directory, base_file = os.path.split(mat_path)
+                        up_two_levels = os.path.abspath(os.path.join(directory, '..'))
+                        cluster_name = os.path.basename(up_two_levels)
+                        # Append a new row to the DataFrame
+                        if self.df[(self.df["Cluster"] == cluster_name) & (self.df["File Name"] == base_file)].empty:
+                            new_row = pd.DataFrame({
+                                "Site Name": "",  # Assuming Site Name is not determined here
+                                "Cluster": cluster_name,
+                                "File Name": base_file,
+                                "δv": "",
+                                "νv": "",
+                                "δh": "",
+                                "νh": "",
+                                "σ": "",
+                                "σt": "",
+                                "δvt": "",
+                                "δht": "",
+                            }, index=[0])
+                            print(new_row)
+                            # Correct usage of append method
+                            self.df = pd.concat([self.df, new_row], ignore_index=True)
         self.current_file_index = 0
+        print(self.df)
 
 
     def cache_mat_file(self, mat_path):
@@ -215,11 +319,6 @@ class CPTResultInspector(QMainWindow):
         # processed_data = self.cache_mat_file(mat_path)
         processed_data = self.data_cache.get(mat_path)
         sig, sofv, sofh, nuv, nuh, sig_t, sofv_t, sofh_t, xlim_low, xlim_up = processed_data
-        # print(processed_data)
-        # data = loadmat(mat_path)
-        # x, x_low_GP, x_up_GP = data['x'], data['x_low'], data['x_up']
-
-        # sig, sofv, sofh, nuv, nuh, sig_t, sofv_t, sofh_t, xlim_low, xlim_up = self.extract_data(x, x_low_GP, x_up_GP)
 
         # Plot the data
         # self.plot_canvas_multiple.plot_extracted_data(sig, sofv, sofh, nuv, nuh, sig_t, sofv_t, sofh_t, xlim_low, xlim_up)
@@ -265,6 +364,73 @@ class CPTResultInspector(QMainWindow):
         mat_file_name = os.path.basename(mat_path)
         title = f"{cluster_name}, {mat_file_name.replace('_', '-')}"
         self.plot_canvas_result.set_suptitle(title)
+
+        directory, base_file = os.path.split(mat_path)
+        up_two_levels = os.path.abspath(os.path.join(directory, '..'))
+        cluster_name = os.path.basename(up_two_levels)
+        self.set_checkboxes(cluster_name, base_file)
+
+    
+    def set_checkboxes(self, cluster_name, base_file):
+        row = self.df[(self.df["Cluster"] == cluster_name) & (self.df["File Name"] == base_file)]
+        if not row.empty:
+            for param in self.checkbox_params:
+                value = row.iloc[0][param]
+                checkbox = self.checkbox_widgets[param]
+                try:
+                    # Attempt to convert the value to float
+                    float_value = float(value)
+                    if math.isnan(float_value):
+                        checkbox.setChecked(False)
+                        checkbox.setText("To check")
+                    else:
+                        checkbox.setChecked(True)
+                        checkbox.setText("Identifiable")
+                except ValueError:
+                    # If conversion fails, check if it's NaN
+                    if pd.isna(value):
+                        checkbox.setText("To check")
+                    else:
+                        checkbox.setChecked(False)
+                        checkbox.setText("Unidentifiable")
+                except TypeError:
+                    # Handle the case where value is None or similar
+                    checkbox.setText("To check")
+
+
+    def update_df_value(self, param, state):
+        # Find the current mat file's cluster name and file name
+        mat_path = self.mat_files[self.current_file_index]
+        directory, base_file = os.path.split(mat_path)
+        up_two_levels = os.path.abspath(os.path.join(directory, '..'))
+        cluster_name = os.path.basename(up_two_levels)
+
+        # Locate the row in the DataFrame
+        # row_index = self.df[(self.df["Cluster"] == cluster_name) & (self.df["File Name"] == base_file)].index
+        # Locate the row in the DataFrame
+        row_indices = self.df[(self.df["Cluster"] == cluster_name) & (self.df["File Name"] == base_file)].index.tolist()        # # Check the state and update the DataFrame accordingly
+        #  Check if row_indices is not empty and contains exactly one index
+        if row_indices:
+            row_index = row_indices[0]  # Assuming only one match, otherwise, you'll need to handle multiple matches
+            if state == Qt.Checked:
+                # If checked, mark as "Identifiable"
+                self.df.at[row_index, param] = 1
+            else:
+                # If unchecked, mark as "Unidentifiable"
+                self.df.at[row_index, param] = "<0"
+        else:
+            print("Row not found.")
+
+        # print(self.df.at[row_index, param])
+
+
+    def submit_changes(self):
+        pass
+
+    
+    def export_to_csv(self):
+        output_csv_file_path = os.path.join(self.folder_path, 'results_summary.csv')
+        self.df.to_csv(output_csv_file_path, index=False)
 
 
     def prev_mat_file(self):
