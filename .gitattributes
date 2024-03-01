@@ -1,2 +1,4 @@
+dist/CPTResultInspector.exe filter=lfs diff=lfs merge=lfs -text
+build/CPTResultInspector/CPTResultInspector.pkg filter=lfs diff=lfs merge=lfs -text
 *.pkg filter=lfs diff=lfs merge=lfs -text
 *.exe filter=lfs diff=lfs merge=lfs -text
