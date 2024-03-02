@@ -1,50 +1,40 @@
-# CPT Data Editor
+# CPT Data Workflow
 
-CPT Data Editor is a comprehensive tool designed for the visualization and manipulation of Cone Penetration Test (CPT) data. Built using PyQt5, it provides a user-friendly interface for selecting projects, visualizing data, editing data within selected depth ranges, and exporting the modified data for further analysis.
+This documentation provides a comprehensive guide to working with Cone Penetration Test (CPT) data using a suite of tools designed for data cleaning, analysis, and results inspection. Follow the steps outlined below to effectively clean your data, perform analyses, and inspect your results.
 
-## Features
+## Overview
 
-- **Project Selection:** Easily choose a project path to work with CPT data.
-- **Data Visualization:** View plots of CPT data, including location plots, main data plots, and export plots.
-- **Data Editing:** Interactively select regions within the plot to clear or recover data points.
-- **Depth Selection:** Specify depth ranges for focused analysis or modifications.
-- **Export Functionality:** Export modified data to MATLAB `.mat` files for further analysis.
+1. **CPT Data Editor:** Clean and prepare your CPT data.
+2. **Data Analysis:** Analyze the cleaned data using MATLAB scripts.
+3. **CPT Results Inspector:** View and interpret the results of your CPT data analysis.
 
-## Installation
+## Step 1: Cleaning Data with CPT Data Editor
 
-To run the CPT Data Editor, you'll need a Windows environment. The tool is packaged as an executable file for ease of use.
+CPT Data Editor is a tool designed for the visualization and manipulation of CPT data. It offers features for project selection, data visualization, data editing, depth selection, and data export.
 
-1. **Download the Tool:** Download the `CPTDataEditor.exe` file from 'dist/' folder.
-2. **Run the Executable:** Double-click on the executable file to launch the application. No installation is required.
+### Installation
 
-## Getting Started
+- Requirements: Windows environment.
+- Download and run the `CPTDataEditor.exe` file from the 'dist/' folder.
 
-### Launching the Tool
+### Getting Started
 
-After downloading, simply double-click on `CPTDataEditor.exe` to start the application. The main interface will open, presenting you with the control panels and plot areas.
+#### Launching the Tool
 
-## File Structure
+- Double-click on `CPTDataEditor.exe` to start the application.
 
-Before using the CPT Data Editor, ensure your data is organized according to the following file tree structure:
+#### File Structure
 
+Ensure your data is organized according to the required file tree structure for the CPT Data Editor to function correctly.
 
-```
+```plaintext
 Clusters
 └─Cluster 1083
-  │  Cluster 1083.csv            # Metadata (include location for each soundings)
+  │  Cluster 1083.csv            # Metadata
   │  ...                         # Original data files
   └─Extracted                    # Organized original data files
       │  ...                     
-
 ```
-This structure is crucial for the CPT Data Editor to correctly locate and process your CPT data.
-
-
-### Choosing a Project Path
-
-1. Click on the "Choose Project Path" button in the left control panel.
-2. Upon selecting the "Clusters" directory, a dropdown list will appear, displaying each available cluster. Select the desired cluster from this list to proceed with your analysis. This step ensures you're working within the structured directory outlined in the File Structure section above.
-
 
 ## Editing Data
 
@@ -53,7 +43,6 @@ This structure is crucial for the CPT Data Editor to correctly locate and proces
 - **To Restore Data:** If you wish to regret an action and restore the data you previously cleared, simply use the "Select region to recover data" button and draw a rectangle over the same area. This action restores the data within that region to its original state before any modifications were made.
 
 - Specify the depth ranges to the desired analyzed interval using the "Start Depth" and "End Depth" fields, then click "Submit". This action allows you to focus on a specific interval of your data for analysis or modification.
-
 
 ### Exporting Data
 
@@ -70,23 +59,46 @@ Clusters
 
 ```
 
-## Troubleshooting
 
-If you encounter issues while using the CPT Data Editor, please ensure that you have the necessary permissions to read and write to the chosen project directory. For other issues, refer to the FAQs section or contact support.
+## Step 2: Analyzing Data with MATLAB
+
+After cleaning the data with CPT Data Editor, proceed to analyze the data using MATLAB scripts.
+
+### Preparing for Analysis
+
+- Ensure MATLAB is installed on your system.
+- Locate the `.mat` files exported from the CPT Data Editor.
+
+### Running Analysis Scripts
+
+- Open the provided MATLAB scripts.
+- Load your `.mat` files for analysis.
+- Follow the script instructions to perform your analysis.
+
+## Step 3: Inspecting Results with CPT Results Inspector
+
+The final step involves inspecting the results of your CPT data analysis.
+
+### Installation and Launching
+
+- Similar to the CPT Data Editor, download and run the executable for the CPT Results Inspector.
+
+### Using the CPT Results Inspector
+
+- Load your analysis results.
+- Use the tool's features to view and interpret the data.
+
+## Troubleshooting and Support
+
+If you encounter issues at any step, ensure you have the necessary permissions for the directories you're working with. For specific tool-related issues, refer to the FAQs section or contact support.
 
 ## FAQs
 
-*Q: Can I run this tool on macOS or Linux?*
-
-A: Currently, the CPT Data Editor is only available for Windows. Support for other operating systems is planned for future releases.
-
-*Q: What types of CPT data files can I use with this tool?*
-
-A: The tool is designed to work with `.csv` files for CPT data and `.mat` files for MATLAB integration.
+Answers to common questions regarding the use of these tools, system requirements, and data file types.
 
 ## Support
 
-For further assistance or to report bugs, please email yongkengabc.com.
+For further assistance or to report bugs, please email support@example.com.
 
 ## License
 
