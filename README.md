@@ -96,18 +96,44 @@ Clusters
   └─results_TMCMC                # Analysis results
       │  ...                
 ```
+
+
 ## Step 3: Inspecting Results with CPT Results Inspector
 
-The final step involves inspecting the results of your CPT data analysis.
+After completing the data analysis using MATLAB, the final step involves inspecting and interpreting the results using the CPT Results Inspector tool.
 
 ### Installation and Launching
 
-- Similar to the CPT Data Editor, download and run the executable for the CPT Results Inspector.
+1. **Download the Executable:** Obtain the executable file for the CPT Results Inspector from the provided source.
+
+2. **Run the Application:** Double-click on the downloaded executable file (`CPTResultsInspector.exe`) to launch the application.
 
 ### Using the CPT Results Inspector
 
-- Load your analysis results.
-- Use the tool's features to view and interpret the data.
+1. **Select Parent Folder:** Choose the "Clusters" folder, which serves as the parent directory containing individual cluster folders.
+
+2. **Navigate Analyzed Clusters:** All the analyzed cluster folders will be listed. Use the "Previous" and "Next" buttons to toggle between different result files, or directly select from the dropdown list.
+
+3. **View Plot Results:** A pop-up results window will display log-log subplots of the following parameters:
+   - SOFv vs nuv
+   - SOFh vs nuh
+   - sigt vs sig
+   - SOFht vs SOFvt
+
+4. **Parameter Identifiability:** The right panel of the results window shows the identifiability status of eight parameters. Each parameter can have one of three statuses:
+   - To Check
+   - Identifiable
+   - Unidentifiable
+
+   When setting a parameter to "Identifiable," a default value (mean of that parameter) will be displayed in the textbox. For "Unidentifiable" parameters, a default description (2.5th percentile < parameter < 97.5th percentile) will be shown. Users can modify these descriptions according to their judgment.
+
+5. **Submit Modifications:** After making any modifications, click the "Submit" button to save the changes.
+
+6. **Generate Results Summary CSV:** A results summary CSV file will be automatically generated under the "Clusters" folder, containing the updated identifiability statuses and any modifications made by the user.
+
+By following these steps, users can effectively inspect and interpret the results of their CPT data analysis using the CPT Results Inspector tool.
+
+
 
 ## Troubleshooting and Support
 
