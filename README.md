@@ -42,7 +42,7 @@ Clusters
 
 - **To Restore Data:** If you wish to regret an action and restore the data you previously cleared, simply use the "Select region to recover data" button and draw a rectangle over the same area. This action restores the data within that region to its original state before any modifications were made.
 
-- Specify the depth ranges to the desired analyzed interval using the "Start Depth" and "End Depth" fields, then click "Submit". This action allows you to focus on a specific interval of your data for analysis or modification.
+- Specify the depth ranges to the desired analyzed interval using the "Start Depth" and "End Depth" fields, then click "Submit". This action allows you to focus on a specific interval of your data for analysis or modification. Upon submitting the start and end depth, the selected depth region will be highlighted in light yellow for easy reference.
 
 ### Exporting Data
 
@@ -132,6 +132,11 @@ After completing the data analysis using MATLAB, the final step involves inspect
 6. **Generate Results Summary CSV:** A results summary CSV file will be automatically generated under the "Clusters" folder, containing the updated identifiability statuses and any modifications made by the user.
 
 By following these steps, users can effectively inspect and interpret the results of their CPT data analysis using the CPT Results Inspector tool.
+
+### Future Functionality
+
+In future updates, users can expect the addition of the following functionality:
+- **View CPT Data and Sounding Locations:** Users will have the ability to visualize the CPT data and the locations of soundings being analyzed for each MAT file. This feature will provide deeper insights into the data and enhance the interpretability of the results.
 
 
 
