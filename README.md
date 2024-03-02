@@ -14,7 +14,7 @@ CPT Data Editor is a comprehensive tool designed for the visualization and manip
 
 To run the CPT Data Editor, you'll need a Windows environment. The tool is packaged as an executable file for ease of use.
 
-1. **Download the Tool:** Download the `CPTDataEditor.exe` file from the provided link.
+1. **Download the Tool:** Download the `CPTDataEditor.exe` file from 'dist/' folder.
 2. **Run the Executable:** Double-click on the executable file to launch the application. No installation is required.
 
 ## Getting Started
