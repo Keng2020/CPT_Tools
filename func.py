@@ -1,5 +1,6 @@
 import os
 import shutil
+import glob
 
 def find_folders_with_subfolders(base_dir, parent_folder_hint, subfolder_name):
     """
@@ -46,3 +47,14 @@ def copy_folders_with_subfolders(src_directory, dest_directory, folder_hint='', 
                     print(f"Destination '{dest_path}' already exists. Skipping.")
             except Exception as e:
                 print(f"Error copying '{root}' to '{dest_path}': {e}")
+
+
+def delete_files_by_pattern(start_dir, target_dir_name, file_pattern):
+    """
+    Deletes files maching a specified pattern under any directories that match the 
+    target directory name, starting from the specified start directory.
+
+    :param start_dir: The base directory to start the search from.
+    :param target_dir_name: The name of the target directory to look for. 
+    :param file_pattern: 
+    """
