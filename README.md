@@ -23,21 +23,52 @@ To run the CPT Data Editor, you'll need a Windows environment. The tool is packa
 
 After downloading, simply double-click on `CPTDataEditor.exe` to start the application. The main interface will open, presenting you with the control panels and plot areas.
 
+## File Structure
+
+Before using the CPT Data Editor, ensure your data is organized according to the following file tree structure:
+
+
+```
+Clusters
+└─Cluster 1083
+  │  Cluster 1083.csv            # Metadata (include location for each soundings)
+  │  ...                         # Original data files
+  └─Extracted                    # Organized original data files
+      │  ...                     
+
+```
+This structure is crucial for the CPT Data Editor to correctly locate and process your CPT data.
+
+
 ### Choosing a Project Path
 
 1. Click on the "Choose Project Path" button in the left control panel.
-2. Navigate to the directory containing your CPT data and select it.
+2. Upon selecting the "Clusters" directory, a dropdown list will appear, displaying each available cluster. Select the desired cluster from this list to proceed with your analysis. This step ensures you're working within the structured directory outlined in the File Structure section above.
 
-### Viewing and Editing Data
 
-- Use the dropdown menus in the left control panel to select clusters and processed clusters.
-- Navigate through the plots using the "Previous plot" and "Next plot" buttons.
-- To edit data, use the "Select region to clear data" or "Select region to recover data" buttons and draw a rectangle over the plot area.
-- Specify depth ranges for modifications using the "Start Depth" and "End Depth" fields, then click "Submit".
+## Editing Data
+
+- **To Clear Ambiguous Data:** Use the "Select region to clear data" button to draw a rectangle over the plot area. This action clears the data within the selected region, setting the values to NaN, which helps in excluding ambiguous or erroneous data points from your analysis.
+
+- **To Restore Data:** If you wish to regret an action and restore the data you previously cleared, simply use the "Select region to recover data" button and draw a rectangle over the same area. This action restores the data within that region to its original state before any modifications were made.
+
+- Specify the depth ranges to the desired analyzed interval using the "Start Depth" and "End Depth" fields, then click "Submit". This action allows you to focus on a specific interval of your data for analysis or modification.
+
 
 ### Exporting Data
 
-After making the desired modifications, click the "Export to .mat file" button to save your changes. Choose a location to save the exported `.mat` file.
+After making the desired modifications, click the "Export to .mat file" button to save your changes. The `clean_data_from_python.mat` file will be directly saved in the "Cluster XX" folder that was selected in the dropdown list, without the need to choose a location manually. The updated structure in the chosen cluster folder will include this newly created file:
+
+```
+Clusters
+└─Cluster 1083
+  │  clean_data_from_python.mat  # Processed data
+  │  Cluster 1083.csv            
+  │  ...                         
+  └─Extracted                    
+      │  ...                     
+
+```
 
 ## Troubleshooting
 
@@ -55,7 +86,7 @@ A: The tool is designed to work with `.csv` files for CPT data and `.mat` files 
 
 ## Support
 
-For further assistance or to report bugs, please email support@example.com.
+For further assistance or to report bugs, please email yongkengabc.com.
 
 ## License
 
