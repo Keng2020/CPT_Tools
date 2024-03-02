@@ -31,4 +31,4 @@ if __name__ == "__main__":
     script_dir = os.path.dirname(script_path)
     # Change the current working directory to the script directory
     os.chdir(script_dir)
-    package_pyqt5_app('CPTResultInspector.py')
+    package_pyqt5_app('CPTDataEditor.py')
