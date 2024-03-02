@@ -62,19 +62,40 @@ Clusters
 
 ## Step 2: Analyzing Data with MATLAB
 
-After cleaning the data with CPT Data Editor, proceed to analyze the data using MATLAB scripts.
+After cleaning the data with the CPT Data Editor, the next step is to analyze the data using MATLAB. This process involves executing MATLAB scripts that require minimal setup and user input.
 
 ### Preparing for Analysis
+
+Before running the analysis scripts:
 
 - Ensure MATLAB is installed on your system.
 - Locate the `.mat` files exported from the CPT Data Editor.
 
 ### Running Analysis Scripts
 
-- Open the provided MATLAB scripts.
-- Load your `.mat` files for analysis.
-- Follow the script instructions to perform your analysis.
+1. **Set the Site Name:** Open the MATLAB script. At the beginning of the script, find the `siteName` variable and set it to match the name of your project folder (e.g., `"Cluster 1083"`).
 
+2. **Execute the Script:** Run the script in MATLAB. The script is designed to automatically load the necessary `.mat` file and prepare the data for analysis.
+
+3. **Input Depth Range:** When prompted, enter the start depth and end depth for the analysis. These values define the depth interval you wish to analyze.
+
+By following these steps, the script will analyze the CPT data within the specified depth range. This streamlined approach minimizes manual adjustments and simplifies the analysis process.
+
+### Analysis Output
+
+Upon completing the analysis, a new folder named `results_TMCMC` will be created within your project directory. This folder contains the analysis results, including figures and MATLAB `.mat` files with the analyzed data. The project directory will now look like this:
+
+```
+Clusters
+└─Cluster 1083
+  │  clean_data_from_python.mat  
+  │  Cluster 1083.csv            
+  │  ...                         
+  └─Extracted                    
+      │  ...                     
+  └─results_TMCMC                # Analysis results
+      │  ...                
+```
 ## Step 3: Inspecting Results with CPT Results Inspector
 
 The final step involves inspecting the results of your CPT data analysis.
