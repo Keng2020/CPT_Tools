@@ -426,14 +426,14 @@ class CPTDataEditor(QMainWindow):
             for file_id in closest_files:
                 nztmX, nztmY = self.extract_nztm_for_file_ids([file_id])
                 highlighted_points.append((nztmX, nztmY))
-            
+            markersize=10
             # Update the plot with the new data and styles
-            self.loc_plot_canvas.plot(np.array(self.nztmX_list), np.array(self.nztmY_list), marker='o', linestyle='')
+            self.loc_plot_canvas.plot(np.array(self.nztmX_list), np.array(self.nztmY_list), marker='o', linestyle='', markersize=markersize)
 
             
             # Specifically highlight the current and closest points after plotting all points
             for point in highlighted_points:
-                self.loc_plot_canvas.plot(point[0], point[1], **{'marker':'o', 'markersize':5, 'linestyle':"", 'color':('red' if point == highlighted_points[0] else 'orange')})
+                self.loc_plot_canvas.plot(point[0], point[1], **{'marker':'o', 'markersize':markersize, 'linestyle':"", 'color':('red' if point == highlighted_points[0] else 'orange')})
                 
             # Set plot attributes
             self.loc_plot_canvas.set_plot_attributes(
